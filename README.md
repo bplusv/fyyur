@@ -112,32 +112,28 @@ Best of luck in your final project! Fyyur depends on you!
 
 ### Development Setup
 
-First, [install Flask](http://flask.pocoo.org/docs/1.0/installation/#install-flask) if you haven't already.
-
-  ```
-  $ cd ~
-  $ sudo pip3 install Flask
-  ```
-
 To start and run the local development server,
 
 1. Initialize and activate a virtualenv:
   ```
   $ cd YOUR_PROJECT_DIRECTORY_PATH/
-  $ virtualenv --no-site-packages env
-  $ source env/bin/activate
+  $ virtualenv venv
+  $ source venv/bin/activate
   ```
 
 2. Install the dependencies:
   ```
-  $ pip install -r requirements.txt
+  $ pip3 install -r requirements.txt
+  ```
+  
+3. Run DB Migrations:
+  ```
+  $ flask db upgrade
   ```
 
-3. Run the development server:
+4. Run the development server:
   ```
-  $ export FLASK_APP=app
-  $ export FLASK_ENV=development # enables debug mode
-  $ python3 app.py
+  $ FLASK_APP=app FLASK_ENV=development python3 app.py
   ```
 
-4. Navigate to Home page [http://localhost:5000](http://localhost:5000)
+5. Navigate to Home page [http://localhost:5000](http://localhost:5000)
