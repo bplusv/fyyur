@@ -123,7 +123,7 @@ To start and run the local development server,
 
 2. Install the dependencies:
   ```
-  $ pip install -r requirements.txt
+  $ pip3 install -r requirements.txt
   ```
   
 3. Run DB Migrations:
