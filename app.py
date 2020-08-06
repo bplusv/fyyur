@@ -44,12 +44,18 @@ class Genre(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
 
+class State(db.Model):
+    __tablename__ = 'states'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    venues = db.relationship('Venue', back_populates='state', lazy=True)
+    artists = db.relationship('Artist', back_populates='state', lazy=True)
+
 class Venue(db.Model):
     __tablename__ = 'venues'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     city = db.Column(db.String(120), nullable=False)
-    state = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
     image_link = db.Column(db.String(500))
@@ -57,6 +63,8 @@ class Venue(db.Model):
     website = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String)
+    state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=False)
+    state = db.relationship('State', back_populates='venues', lazy=True)
     genres = db.relationship('Genre', secondary=venue_genres_table, lazy=True)
     shows = db.relationship('Show', back_populates='venue', lazy=True, cascade='all, delete-orphan')
 
@@ -65,17 +73,16 @@ class Artist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     city = db.Column(db.String(120), nullable=False)
-    state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String)
+    state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=False)
+    state = db.relationship('State', back_populates='artists', lazy=True)
     genres = db.relationship('Genre', secondary=artist_genres_table, lazy=True)
     shows = db.relationship('Show', back_populates='artist', lazy=True, cascade='all, delete-orphan')
-
-
 
 class Show(db.Model):
     __tablename__ = 'shows'
@@ -117,12 +124,12 @@ def venues():
   #       num_shows should be aggregated based on number of upcoming shows per venue.
 
   data = []
-  areas = db.session.query(Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
-  for city,state in areas:
+  areas = db.session.query(Venue.city, Venue.state_id).group_by(Venue.city, Venue.state_id).all()
+  for city,state_id in areas:
     data.append({
       'city': city,
-      'state': state,
-      'venues': Venue.query.filter_by(city=city, state=state).all()
+      'state': state_id,
+      'venues': Venue.query.filter_by(city=city, state_id=state_id).all()
     })
 
   old_data=[{
@@ -247,7 +254,6 @@ def show_venue(venue_id):
     "past_shows_count": 1,
     "upcoming_shows_count": 1,
   }
-  old_data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -256,6 +262,7 @@ def show_venue(venue_id):
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
   form = VenueForm()
+  form.state.query = State.query.order_by(State.name.asc())
   form.genres.query = Genre.query.order_by(Genre.name.asc())
   return render_template('forms/new_venue.html', form=form)
 
@@ -266,7 +273,7 @@ def create_venue_submission():
     venue = Venue()
     venue.name = form['name']
     venue.city = form['city']
-    venue.state = form['state']
+    venue.state = State.query.get(form['state'])
     venue.address = form['address']
     venue.phone = form['phone']
     venue.genres = list(map(lambda id: Genre.query.get(id), form.getlist('genres')))
@@ -455,6 +462,7 @@ def edit_venue_submission(venue_id):
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
   form = ArtistForm()
+  form.state.query = State.query.order_by(State.name.asc())
   form.genres.query = Genre.query.order_by(Genre.name.asc())
   return render_template('forms/new_artist.html', form=form)
 
@@ -465,7 +473,7 @@ def create_artist_submission():
     artist = Artist()
     artist.name = data['name']
     artist.city = data['city']
-    artist.state = data['state']
+    artist.state = State.query.get(data['state'])
     artist.phone = data['phone']
     artist.genres = list(map(lambda id: Genre.query.get(id), data.getlist('genres')))
     db.session.add(artist)
