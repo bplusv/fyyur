@@ -256,25 +256,27 @@ def show_venue(venue_id):
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
   form = VenueForm()
+  form.genres.query = Genre.query.order_by(Genre.name.asc())
   return render_template('forms/new_venue.html', form=form)
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
   try:
-    data = request.form
+    form = request.form
     venue = Venue()
-    venue.name = data['name']
-    venue.city = data['city']
-    venue.state = data['state']
-    venue.address = data['address']
-    venue.phone = data['phone']
+    venue.name = form['name']
+    venue.city = form['city']
+    venue.state = form['state']
+    venue.address = form['address']
+    venue.phone = form['phone']
+    venue.genres = list(map(lambda id: Genre.query.get(id), form.getlist('genres')))
     db.session.add(venue)
     db.session.commit()
-    flash('Venue ' + data['name'] + ' was successfully listed!')
+    flash('Venue ' + form['name'] + ' was successfully listed!')
   except:
     db.session.rollback()
     print(sys.exc_info())
-    flash('An error occurred. Venue ' + data['name'] + ' could not be listed.')
+    flash('An error occurred. Venue ' + form['name'] + ' could not be listed.')
   finally:
     db.session.close()
   return render_template('pages/home.html')
@@ -453,6 +455,7 @@ def edit_venue_submission(venue_id):
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
   form = ArtistForm()
+  form.genres.query = Genre.query.order_by(Genre.name.asc())
   return render_template('forms/new_artist.html', form=form)
 
 @app.route('/artists/create', methods=['POST'])
@@ -464,6 +467,7 @@ def create_artist_submission():
     artist.city = data['city']
     artist.state = data['state']
     artist.phone = data['phone']
+    artist.genres = list(map(lambda id: Genre.query.get(id), data.getlist('genres')))
     db.session.add(artist)
     db.session.commit()
     flash('Artist ' + data['name'] + ' was successfully listed!')
