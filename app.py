@@ -123,7 +123,7 @@ def index():
 def venues():
   areas = db.session.query(Venue.city, State.name, State.id).join(State)\
     .group_by(Venue.city, State.name, State.id).order_by(Venue.city.asc()).all()
-  result = [{
+  view_model = [{
     'city': city,
     'state': state,
     'venues': [{
@@ -132,13 +132,13 @@ def venues():
       'num_upcoming_shows': sum(show.start_time > datetime.now() for show in venue.shows)
     } for venue in Venue.query.filter_by(city=city, state_id=state_id).all()]
   } for city, state, state_id in areas]
-  return render_template('pages/venues.html', areas=result)
+  return render_template('pages/venues.html', areas=view_model)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
   search_term = request.form.get('search_term', '')
   venues = Venue.query.filter(Venue.name.ilike(f'%{search_term}%')).all()
-  result = {
+  view_model = {
     'count': len(venues),
     'data': [{
       'id': venue.id,
@@ -146,12 +146,12 @@ def search_venues():
       'num_upcoming_shows': sum(show.start_time > datetime.now() for show in venue.shows)
     } for venue in venues]
   }
-  return render_template('pages/search_venues.html', results=result, search_term=search_term)
+  return render_template('pages/search_venues.html', results=view_model, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   venue = Venue.query.get(venue_id)
-  result = {
+  view_model = {
     'id': venue.id,
     'name': venue.name,
     'genres': [genre.name for genre in venue.genres],
@@ -179,7 +179,7 @@ def show_venue(venue_id):
     } for show in venue.shows if show.start_time > datetime.now()],
     'upcoming_shows_count': sum(show.start_time > datetime.now() for show in venue.shows)
   }
-  return render_template('pages/show_venue.html', venue=result)
+  return render_template('pages/show_venue.html', venue=view_model)
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -226,32 +226,34 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  data = Artist.query.all()
-  return render_template('pages/artists.html', artists=data)
+  artists = Artist.query.order_by(Artist.name.asc()).all()
+  view_model = [{
+    'id': artist.id,
+    'name': artist.name
+  } for artist in artists]
+  return render_template('pages/artists.html', artists=view_model)
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
   search_term = request.form.get('search_term', '')
   artists = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
-  data = {
+  view_model = {
     "count": len(artists),
-    "data": list(map(lambda artist: {
+    "data": [{
       "id": artist.id,
       "name": artist.name,
-      "num_upcoming_shows": Show.query.filter(
-        Show.artist_id == artist.id, 
-        Show.start_time > str(datetime.now())).count()
-    }, artists))
+      "num_upcoming_shows": sum(show.start_time > datetime.now() for show in artist.shows)
+    } for artist in artists]
   }
-  return render_template('pages/search_artists.html', results=data, search_term=search_term)
+  return render_template('pages/search_artists.html', results=view_model, search_term=search_term)
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
   artist = Artist.query.get(artist_id)
-  data = {
+  view_model = {
     "id": artist.id,
     "name": artist.name,
-    "genres": list(map(lambda genre: genre.name, artist.genres)),
+    "genres": [genre.name for genre in artist.genres],
     "city": artist.city,
     "state": artist.state.name,
     "phone": artist.phone,
@@ -260,30 +262,22 @@ def show_artist(artist_id):
     "seeking_venue": artist.seeking_venue,
     "seeking_description": artist.seeking_description,
     "image_link": artist.image_link,
-    "past_shows": list(map(lambda show: {
+    "past_shows": [{
         "venue_id": show.venue_id,
         "venue_name": show.venue.name,
         "venue_image_link": show.venue.image_link,
         "start_time": str(show.start_time)
-      }, Show.query.filter(
-        Show.artist_id == artist.id, 
-        Show.start_time <= str(datetime.now())).all())),
-    "past_shows_count": Show.query.filter(
-        Show.artist_id == artist.id, 
-        Show.start_time <= str(datetime.now())).count(),
-    "upcoming_shows": list(map(lambda show: {
+      } for show in artist.shows if show.start_time <= datetime.now()],
+    "past_shows_count": sum(show.start_time <= datetime.now() for show in artist.shows),
+    "upcoming_shows": [{
         "venue_id": show.venue_id,
         "venue_name": show.venue.name,
         "venue_image_link": show.venue.image_link,
         "start_time": str(show.start_time)
-      }, Show.query.filter(
-        Show.artist_id == artist.id, 
-        Show.start_time > str(datetime.now())).all())),
-    "upcoming_shows_count": Show.query.filter(
-        Show.artist_id == artist.id, 
-        Show.start_time > str(datetime.now())).count()
+      } for show in artist.shows if show.start_time > datetime.now()],
+    "upcoming_shows_count": sum(show.start_time > datetime.now() for show in artist.shows)
   }
-  return render_template('pages/show_artist.html', artist=data)
+  return render_template('pages/show_artist.html', artist=view_model)
 
 #  Update
 #  ----------------------------------------------------------------
@@ -356,9 +350,9 @@ def create_artist_submission():
     artist = Artist()
     artist.name = data['name']
     artist.city = data['city']
-    artist.state = State.query.get(data['state'])
+    artist.state_id = data['state']
     artist.phone = data['phone']
-    artist.genres = list(map(lambda id: Genre.query.get(id), data.getlist('genres')))
+    artist.genres = [Genre(id=genre_id) for genre in data.getlist('genres')]
     db.session.add(artist)
     db.session.commit()
     flash('Artist ' + data['name'] + ' was successfully listed!')
@@ -375,18 +369,16 @@ def create_artist_submission():
 
 @app.route('/shows')
 def shows():
-  data = []
   shows = Show.query.all()
-  for show in shows:
-    data.append({
-      "venue_id": show.venue_id,
-      "venue_name": show.venue.name,
-      "artist_id": show.artist_id,
-      "artist_name": show.artist.name,
-      "artist_image_link": show.artist.image_link,
-      "start_time": str(show.start_time)
-    })
-  return render_template('pages/shows.html', shows=data)
+  view_model = [{
+    'venue_id': show.venue.id,
+    'venue_name': show.venue.name,
+    'artist_id': show.artist_id,
+    'artist_name': show.artist.name,
+    'artist_image_link': show.artist.image_link,
+    'start_time': str(show.start_time)
+  } for show in shows]
+  return render_template('pages/shows.html', shows=view_model)
 
 @app.route('/shows/create')
 def create_shows():
