@@ -121,6 +121,7 @@ def index():
 
 @app.route('/venues')
 def venues():
+  current_time = datetime.now().astimezone()
   areas = db.session.query(Venue.city, State.name, State.id).join(State)\
     .group_by(Venue.city, State.name, State.id).order_by(Venue.city.asc()).all()
   view_model = [{
@@ -129,13 +130,14 @@ def venues():
     'venues': [{
       'id': venue.id,
       'name': venue.name,
-      'num_upcoming_shows': sum(show.start_time > datetime.now() for show in venue.shows)
+      'num_upcoming_shows': sum(show.start_time > current_time for show in venue.shows)
     } for venue in Venue.query.filter_by(city=city, state_id=state_id).all()]
   } for city, state, state_id in areas]
   return render_template('pages/venues.html', areas=view_model)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
+  current_time = datetime.now().astimezone()
   search_term = request.form.get('search_term', '')
   venues = Venue.query.filter(Venue.name.ilike(f'%{search_term}%')).all()
   view_model = {
@@ -143,13 +145,14 @@ def search_venues():
     'data': [{
       'id': venue.id,
       'name': venue.name,
-      'num_upcoming_shows': sum(show.start_time > datetime.now() for show in venue.shows)
+      'num_upcoming_shows': sum(show.start_time > current_time for show in venue.shows)
     } for venue in venues]
   }
   return render_template('pages/search_venues.html', results=view_model, search_term=search_term)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
+  current_time = datetime.now().astimezone()
   venue = Venue.query.get(venue_id)
   view_model = {
     'id': venue.id,
@@ -169,15 +172,15 @@ def show_venue(venue_id):
       'artist_name': show.artist.name,
       'artist_image_link': show.artist.image_link,
       'start_time': str(show.start_time),
-    } for show in venue.shows if show.start_time <= datetime.now()],
-    'past_shows_count': sum(show.start_time <= datetime.now() for show in venue.shows),
+    } for show in venue.shows if show.start_time <= current_time],
+    'past_shows_count': sum(show.start_time <= current_time for show in venue.shows),
     'upcoming_shows': [{
       'artist_id': show.artist_id,
       'artist_name': show.artist.name,
       'artist_image_link': show.artist.image_link,
       'start_time': str(show.start_time),
-    } for show in venue.shows if show.start_time > datetime.now()],
-    'upcoming_shows_count': sum(show.start_time > datetime.now() for show in venue.shows)
+    } for show in venue.shows if show.start_time > current_time],
+    'upcoming_shows_count': sum(show.start_time > current_time for show in venue.shows)
   }
   return render_template('pages/show_venue.html', venue=view_model)
 
@@ -236,6 +239,7 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
+  current_time = datetime.now().astimezone()
   search_term = request.form.get('search_term', '')
   artists = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
   view_model = {
@@ -243,13 +247,14 @@ def search_artists():
     "data": [{
       "id": artist.id,
       "name": artist.name,
-      "num_upcoming_shows": sum(show.start_time > datetime.now() for show in artist.shows)
+      "num_upcoming_shows": sum(show.start_time > current_time for show in artist.shows)
     } for artist in artists]
   }
   return render_template('pages/search_artists.html', results=view_model, search_term=search_term)
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
+  current_time = datetime.now().astimezone()
   artist = Artist.query.get(artist_id)
   view_model = {
     "id": artist.id,
@@ -268,15 +273,15 @@ def show_artist(artist_id):
         "venue_name": show.venue.name,
         "venue_image_link": show.venue.image_link,
         "start_time": str(show.start_time)
-      } for show in artist.shows if show.start_time <= datetime.now()],
-    "past_shows_count": sum(show.start_time <= datetime.now() for show in artist.shows),
+      } for show in artist.shows if show.start_time <= current_time],
+    "past_shows_count": sum(show.start_time <= current_time for show in artist.shows),
     "upcoming_shows": [{
         "venue_id": show.venue_id,
         "venue_name": show.venue.name,
         "venue_image_link": show.venue.image_link,
         "start_time": str(show.start_time)
-      } for show in artist.shows if show.start_time > datetime.now()],
-    "upcoming_shows_count": sum(show.start_time > datetime.now() for show in artist.shows)
+      } for show in artist.shows if show.start_time > current_time],
+    "upcoming_shows_count": sum(show.start_time > current_time for show in artist.shows)
   }
   return render_template('pages/show_artist.html', artist=view_model)
 
