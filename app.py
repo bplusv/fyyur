@@ -204,7 +204,12 @@ def create_venue_submission():
     venue.state_id = form['state']
     venue.address = form['address']
     venue.phone = form['phone']
-    venue.genres = [Genre(id=genre_id) for genre_id in form.getlist('genres')]
+    venue.genres = [Genre.query.get(id) for id in form.getlist('genres')]
+    venue.image_link = form['image_link']
+    venue.website = form['website']
+    venue.facebook_link = form['facebook_link']
+    venue.seeking_talent = form['seeking_talent']
+    venue.seeking_description = form['seeking_description']
     db.session.add(venue)
     db.session.commit()
     flash('Venue ' + form['name'] + ' was successfully listed!')
