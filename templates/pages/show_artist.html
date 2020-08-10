@@ -3,6 +3,9 @@
 {% block content %}
 <div class="row">
 	<div class="col-sm-6">
+		<p>
+			<a href="/artists/{{ artist.id }}/edit">Edit</a> | <a id="delete-action" href="#">Delete</a>
+		</p>
 		<h1 class="monospace">
 			{{ artist.name }}
 		</h1>
@@ -71,6 +74,19 @@
 		{% endfor %}
 	</div>
 </section>
+<script>
+	const deleteAction = document.getElementById('delete-action');
+	deleteAction.addEventListener('click', e => {
+		e.preventDefault();
+		if (confirm('Are you sure you want to delete the artist "{{ artist.name }}"?')) {
+			fetch('/artists/{{ artist.id }}', {
+				'method': 'DELETE'
+			}).then(
+				result => location = '/'
+			);
+		}
+	});
+</script>
 
 {% endblock %}
 
