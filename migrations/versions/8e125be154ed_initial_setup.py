@@ -113,6 +113,8 @@ def upgrade():
     sa.Column('website', sa.String(length=120), nullable=True),
     sa.Column('seeking_venue', sa.Boolean(), nullable=True),
     sa.Column('seeking_description', sa.String(), nullable=True),
+    sa.Column('available_from', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('available_to', sa.DateTime(timezone=True), nullable=True),
     sa.Column('state_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['state_id'], ['states.id'], ),
     sa.PrimaryKeyConstraint('id')

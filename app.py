@@ -80,6 +80,8 @@ class Artist(db.Model):
     website = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String)
+    available_from = db.Column(db.DateTime(timezone=True))
+    available_to = db.Column(db.DateTime(timezone=True))
     state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=False)
     state = db.relationship('State', back_populates='artists', lazy=True)
     genres = db.relationship('Genre', secondary=artist_genres_table, lazy=True)
@@ -326,7 +328,9 @@ def edit_artist(artist_id):
     'website': artist.website,
     'facebook_link': artist.facebook_link,
     'seeking_venue': artist.seeking_venue,
-    'seeking_description': artist.seeking_description or ''
+    'seeking_description': artist.seeking_description or '',
+    'available_from': artist.available_from,
+    'available_to': artist.available_to
   }
   return render_template('forms/edit_artist.html', form=form, artist=view_model)
 
@@ -345,6 +349,8 @@ def edit_artist_submission(artist_id):
     artist.facebook_link = data['facebook_link']
     artist.seeking_venue = data.get('seeking_venue') == 'y'
     artist.seeking_description = data['seeking_description']
+    artist.available_from = data['available_from']
+    artist.available_to = data['available_to']
     db.session.add(artist)
     db.session.commit()
     flash('Artist ' + artist.name + ' was successfully edited!')
@@ -487,17 +493,25 @@ def create_show_submission():
     show = Show()
     show.venue_id = data['venue_id']
     show.artist_id = data['artist_id']
-    show.start_time = data['start_time']
-    db.session.add(show)
-    db.session.commit()
-    flash('Show was successfully listed!')
+    show.start_time = datetime.fromisoformat(data['start_time']).astimezone()
+    artist = Artist.query.get(show.artist_id)
+    available_from = artist.available_from
+    available_to = artist.available_to
+    if available_from <= show.start_time <= available_to:
+      db.session.add(show)
+      db.session.commit()
+      flash('Show was successfully listed!')
+      return render_template('pages/home.html')
+    else:
+      flash('Artist is not available for this schedule!')
+      redirect(url_for('create_shows'))
   except:
     db.session.rollback()
     print(sys.exc_info())
     flash('An error occurred. Show could not be listed.')
+    return render_template('pages/home.html')
   finally:
     db.session.close()
-  return render_template('pages/home.html')
 
 @app.errorhandler(404)
 def not_found_error(error):

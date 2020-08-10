@@ -69,7 +69,6 @@ class ArtistForm(Form):
         validators=[DataRequired()]
     )
     phone = StringField(
-        # TODO implement validation logic for state
         'phone', validators=[DataRequired()]
     )
     image_link = StringField(
@@ -81,7 +80,6 @@ class ArtistForm(Form):
         validators=[DataRequired()]
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
         'facebook_link', validators=[URL()]
     )
     website = StringField(
@@ -93,5 +91,11 @@ class ArtistForm(Form):
     seeking_description = StringField(
         'seeking_description'
     )
-
-# TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
+    available_from = DateTimeField(
+        'available_from',
+        default= datetime.today()
+    )
+    available_to = DateTimeField(
+        'available_to',
+        default= datetime.today()
+    )
