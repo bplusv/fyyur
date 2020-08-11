@@ -68,6 +68,7 @@ class Venue(db.Model):
     state = db.relationship('State', back_populates='venues', lazy=True)
     genres = db.relationship('Genre', secondary=venue_genres_table, lazy=True)
     shows = db.relationship('Show', back_populates='venue', lazy=True, cascade='all, delete-orphan')
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
 
 class Artist(db.Model):
     __tablename__ = 'artists'
@@ -86,6 +87,7 @@ class Artist(db.Model):
     state = db.relationship('State', back_populates='artists', lazy=True)
     genres = db.relationship('Genre', secondary=artist_genres_table, lazy=True)
     shows = db.relationship('Show', back_populates='artist', lazy=True, cascade='all, delete-orphan')
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, server_default=db.func.now())
 
 class Show(db.Model):
     __tablename__ = 'shows'
