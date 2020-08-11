@@ -117,7 +117,13 @@ app.jinja_env.filters['datetime'] = format_datetime
 
 @app.route('/')
 def index():
-  return render_template('pages/home.html')
+  artists = Artist.query.order_by(Artist.created_at.desc()).limit(10).all()
+  venues = Venue.query.order_by(Venue.created_at.desc()).limit(3).all()
+  view_model = {
+    'recent_artists': artists,
+    'recent_venues': venues
+  }
+  return render_template('pages/home.html', view_model=view_model)
 
 
 #  Venues
@@ -230,7 +236,7 @@ def create_venue_submission():
     flash('An error occurred. Venue ' + form['name'] + ' could not be listed.')
   finally:
     db.session.close()
-  return render_template('pages/home.html')
+  return redirect(url_for('index'))
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
@@ -370,6 +376,7 @@ def edit_artist_submission(artist_id):
     db.session.rollback()
     print(sys.exc_info())
     flash('An error occurred. The artist could not be edited.')
+    return redirect(url_for('edit_artist', artist_id=artist_id))
   finally:
     db.session.close()
   return redirect(url_for('show_artist', artist_id=artist_id))
@@ -437,6 +444,7 @@ def edit_venue_submission(venue_id):
     db.session.rollback()
     print(sys.exc_info())
     flash('An error occurred. The venue could not be edited.')
+    return redirect(url_for('edit_venue', venue_id=venue_id))
   finally:
     db.session.close()
   return redirect(url_for('show_venue', venue_id=venue_id))
@@ -475,9 +483,10 @@ def create_artist_submission():
     db.session.rollback()
     print(sys.exc_info())
     flash('An error occurred. Artist ' + data['name'] + ' could not be listed.')
+    return redirect(url_for('create_artist_form'))
   finally:
     db.session.close()
-  return render_template('pages/home.html')
+  return redirect(url_for('index'))
 
 #  Shows
 #  ----------------------------------------------------------------
@@ -513,7 +522,6 @@ def create_show_submission():
       db.session.add(show)
       db.session.commit()
       flash('Show was successfully listed!')
-      return render_template('pages/home.html')
     else:
       flash('Show could not be listed. Artist is not available for this schedule!')
       return redirect(url_for('create_shows'))
@@ -521,9 +529,10 @@ def create_show_submission():
     db.session.rollback()
     print(sys.exc_info())
     flash('An error occurred. Show could not be listed.')
-    return render_template('pages/home.html')
+    return redirect(url_for('create_shows'))
   finally:
     db.session.close()
+  return redirect(url_for('index'))
 
 @app.errorhandler(404)
 def not_found_error(error):
