@@ -92,10 +92,8 @@ class ArtistForm(Form):
         'seeking_description'
     )
     available_from = DateTimeField(
-        'available_from',
-        default= datetime.today()
+        'available_from'
     )
     available_to = DateTimeField(
-        'available_to',
-        default= datetime.today()
+        'available_to'
     )

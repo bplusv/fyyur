@@ -289,6 +289,8 @@ def show_artist(artist_id):
     "facebook_link": artist.facebook_link,
     "seeking_venue": artist.seeking_venue,
     "seeking_description": artist.seeking_description,
+    'available_from': artist.available_from and artist.available_from.strftime('%I:%M %p') or '',
+    'available_to': artist.available_to and artist.available_to.strftime('%I:%M %p') or '',
     "image_link": artist.image_link,
     "past_shows": [{
         "venue_id": show.venue_id,
@@ -329,8 +331,8 @@ def edit_artist(artist_id):
     'facebook_link': artist.facebook_link,
     'seeking_venue': artist.seeking_venue,
     'seeking_description': artist.seeking_description or '',
-    'available_from': artist.available_from,
-    'available_to': artist.available_to
+    'available_from': artist.available_from and artist.available_from.strftime('%H:%M') or '',
+    'available_to': artist.available_to and artist.available_to.strftime('%H:%M') or ''
   }
   return render_template('forms/edit_artist.html', form=form, artist=view_model)
 
@@ -349,8 +351,8 @@ def edit_artist_submission(artist_id):
     artist.facebook_link = data['facebook_link']
     artist.seeking_venue = data.get('seeking_venue') == 'y'
     artist.seeking_description = data['seeking_description']
-    artist.available_from = data['available_from']
-    artist.available_to = data['available_to']
+    artist.available_from = data['available_from'] and datetime.strptime(data['available_from'], '%H:%M') or None
+    artist.available_to = data['available_to'] and datetime.strptime(data['available_to'], '%H:%M') or None
     db.session.add(artist)
     db.session.commit()
     flash('Artist ' + artist.name + ' was successfully edited!')
@@ -454,6 +456,8 @@ def create_artist_submission():
     artist.facebook_link = data['facebook_link']
     artist.seeking_venue = data.get('seeking_venue') == 'y'
     artist.seeking_description = data['seeking_description']
+    artist.available_from = data['available_from'] and datetime.strptime(data['available_from'], '%H:%M') or None
+    artist.available_to = data['available_to'] and datetime.strptime(data['available_to'], '%H:%M') or None
     db.session.add(artist)
     db.session.commit()
     flash('Artist ' + data['name'] + ' was successfully listed!')
@@ -493,18 +497,16 @@ def create_show_submission():
     show = Show()
     show.venue_id = data['venue_id']
     show.artist_id = data['artist_id']
-    show.start_time = datetime.fromisoformat(data['start_time']).astimezone()
+    show.start_time = datetime.strptime(data['start_time'], '%Y-%m-%d %H:%M:%S')
     artist = Artist.query.get(show.artist_id)
-    available_from = artist.available_from
-    available_to = artist.available_to
-    if available_from <= show.start_time <= available_to:
+    if artist.available_from.time() <= show.start_time.time() <= artist.available_to.time():
       db.session.add(show)
       db.session.commit()
       flash('Show was successfully listed!')
       return render_template('pages/home.html')
     else:
-      flash('Artist is not available for this schedule!')
-      redirect(url_for('create_shows'))
+      flash('Show could not be listed. Artist is not available for this schedule!')
+      return redirect(url_for('create_shows'))
   except:
     db.session.rollback()
     print(sys.exc_info())

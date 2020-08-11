@@ -49,12 +49,12 @@
         {{ form.seeking_description(class_ = 'form-control', value = artist.seeking_description) }}
       </div>
       <div class="form-group">
-        <label for="available_from">Availabe From</label>
-        {{ form.available_from(class_ = 'form-control', placeholder='YYYY-MM-DD HH:MM', value=artist.available_from) }}
+        <label for="available_from">Available From</label>
+        {{ form.available_from(class_ = 'form-control', placeholder='HH:MM', value=artist.available_from) }}
       </div>
       <div class="form-group">
         <label for="available_to">Available To</label>
-        {{ form.available_to(class_ = 'form-control', placeholder='YYYY-MM-DD HH:MM', value=artist.available_to) }}
+        {{ form.available_to(class_ = 'form-control', placeholder='HH:MM', value=artist.available_to) }}
       </div>
       <input type="submit" value="Edit Artist" class="btn btn-primary btn-lg btn-block">
     </form>
