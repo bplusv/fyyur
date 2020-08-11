@@ -141,7 +141,10 @@ def venues():
 def search_venues():
   current_time = datetime.now().astimezone()
   search_term = request.form.get('search_term', '')
-  venues = Venue.query.filter(Venue.name.ilike(f'%{search_term}%')).all()
+  venues = Venue.query.join(State).filter(db.or_(
+    Venue.name.ilike(f'%{search_term}%'),
+    db.func.concat(Venue.city, ', ', State.name).ilike(f'%{search_term}%'))
+  ).all()
   view_model = {
     'count': len(venues),
     'data': [{
@@ -248,10 +251,12 @@ def delete_venue(venue_id):
 
 @app.route('/artists')
 def artists():
+  current_time = datetime.now().astimezone()
   artists = Artist.query.order_by(Artist.name.asc()).all()
   view_model = [{
     'id': artist.id,
-    'name': artist.name
+    'name': artist.name,
+    "num_upcoming_shows": sum(show.start_time > current_time for show in artist.shows)
   } for artist in artists]
   return render_template('pages/artists.html', artists=view_model)
 
@@ -259,7 +264,10 @@ def artists():
 def search_artists():
   current_time = datetime.now().astimezone()
   search_term = request.form.get('search_term', '')
-  artists = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
+  artists = Artist.query.join(State).filter(db.or_(
+    Artist.name.ilike(f'%{search_term}%'),
+    db.func.concat(Artist.city, ', ', State.name).ilike(f'%{search_term}%'))
+  ).all()
   view_model = {
     "count": len(artists),
     "data": [{
