@@ -1,9 +1,12 @@
-Fyyur
------
+# Fyyur
+Fyyur is a musical venue and artist booking site that facilitates the discovery and bookings of shows between local performing artists and venues.
 
-### Introduction
+- Back-end built with Python + Flask framework.
+- Models and relationships with SQLAlchemy ORM, Postgresql.
+- DB migrations with Alembic + Flask-Migrate.
+- Front-end templates with Jinja.
 
-Fyyur is a musical venue and artist booking site that facilitates the discovery and bookings of shows between local performing artists and venues. This site lets you list new artists and venues, discover them, and list shows with artists as a venue owner.
+This site lets you list new artists and venues, discover them, and list shows with artists as a venue owner.
 
 ### Development Setup
 
